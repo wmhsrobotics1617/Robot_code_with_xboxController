@@ -7,7 +7,7 @@
  *  -All functions are pasted in to this single file for the same reasons.
  */
 
-package frc.team6423;
+package frc.robot;
 
 import edu.wpi.first.wpilibj.*;
 import edu.wpi.first.wpilibj.command.Command;
@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.command.Scheduler;
 import edu.wpi.first.wpilibj.livewindow.LiveWindow;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.CameraServer;
 //import org.usfirst.frc.team6423.robot.subsystems.ExampleSubsystem;
 //import edu.wpi.first.wpilibj.ADXRS450_Gyro;
 //import edu.wpi.first.wpilibj.SPI.Port;
@@ -122,8 +123,8 @@ public class Robot extends TimedRobot {
     private static final double MOTOR_MAX_ELEVATOR_DOWN   	= 1.0;// 0.7 tested for normal elv - 1 needed for climb 250lbs
     private static final double MOTOR_MAX_INTAKE_PULL  		= 0.8;
     private static final double MOTOR_MAX_INTAKE_PUSH   	= 1.0;
-    private static final double MOTOR_MAX_INTAKE_TILT_UP  	= 0;
-    private static final double MOTOR_MAX_INTAKE_TILT_DOWN  = 0;
+    private static final double MOTOR_MAX_INTAKE_TILT_UP  	= 0.45;
+    private static final double MOTOR_MAX_INTAKE_TILT_DOWN  = 0.4;
 
     //prevent face plane allowance
     private static final double FACE_PLANT_UP_ALLOWANCE     = 0.30;//how fast when elevator is full up, percent div by 100
@@ -220,7 +221,7 @@ public class Robot extends TimedRobot {
     public void robotInit() {
         SmartDashboard.putData("Auto mode", m_chooser);
         SmartDashboard.putData("Auto choices", m_chooser);
-
+        CameraServer.getInstance().startAutomaticCapture();
         //placeholder until after we see how well cal works for each speed controller
         driveMotorLeft1.enableDeadbandElimination(false);
         driveMotorLeft2.enableDeadbandElimination(false);
@@ -742,14 +743,14 @@ public class Robot extends TimedRobot {
     public void linkIntakeTiltMotorToRightJoyButtons()
     {
         //For now, spins tilt motor one direction for each button
-        if(con.getStartButtonPressed()&& !TRIPPED_INTAKE_MOTOR_TILT)
+        if(con.getPOV(0)== 0&& !TRIPPED_INTAKE_MOTOR_TILT)
         {
             tiltTargetPositionUp = true;
-            //System.out.println("tilt up request");
+            System.out.println("tilt up request");
         }
         else
         {
-            if(con.getBackButtonPressed() && !TRIPPED_INTAKE_MOTOR_TILT)
+            if(con.getPOV(0) == 180 && !TRIPPED_INTAKE_MOTOR_TILT)
             {
                 tiltTargetPositionUp = false;
 
@@ -898,8 +899,8 @@ public class Robot extends TimedRobot {
                     }
                     else
                     {
-                        elevatorMotorLeft.set(.05);
-                        elevatorMotorRight.set(.05);
+                        elevatorMotorLeft.set(.12);
+                        elevatorMotorRight.set(.12);
                         elevatorReachedTarget = true;
                     }
                 }
@@ -1109,5 +1110,12 @@ public class Robot extends TimedRobot {
         nanoNavLockedOut = false;
         iTimerCount = 0;
         gyroDesiredHeading = 0;
+    }
+    double sigmoidal(double x)
+    {
+        if(Math.abs(x) > 0.01)
+            return 0;
+        double e =2.71828182846;
+        return (Math.pow(e,x))/(1+Math.pow(e,x));
     }
 }
